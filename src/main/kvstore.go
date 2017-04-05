@@ -33,11 +33,9 @@ func main() {
 			if (ops[0] == "Put"){
 				fmt.Printf("Executing command, %s\n", cmd)
 				client.Put(ops[1], ops[2])
-				//fmt.Printf("Got Value: %s\n", retVal)	
-			} else if (ops[0] == "Append") {
+			} else {
 				fmt.Printf("Executing command, %s\n", cmd)
 				client.Append(ops[1], ops[2])
-				//fmt.Printf("Got Value: %s\n", retVal)	
 			}
 		} else {
 			fmt.Printf("Invalid Command %s\n", cmd)

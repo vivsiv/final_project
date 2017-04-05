@@ -7,16 +7,12 @@ import (
 	"fmt"
 )
 
-
-
-
 type Clerk struct {
 	servers     []*rpc.Client
 	me          int64 //this clerks id
 	lastLeader  int
 	lastRequest int
 	DEBUG       bool
-	// You will have to modify this struct.
 }
 
 func (ck *Clerk) toString() string {

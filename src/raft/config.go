@@ -26,11 +26,11 @@ type config struct {
 	connected []bool
 }
 
-func make_config(num_rafts int) *config {
+func make_config(t *testing.T, num_rafts int) *config {
 	//runtime.GOMAXPROCS(4)
 
 	cfg := &config{}
-	// cfg.t = t
+	cfg.t = t
 	cfg.num_rafts = num_rafts
 	cfg.ports = make([]int, cfg.num_rafts)
 	cfg.rafts = make([]*Raft, cfg.num_rafts)
@@ -167,9 +167,11 @@ func (cfg *config) disconnect(servNum int){
 	clients := cfg.clientEnds[servNum]
 
 	for i := 0; i < len(clients); i++ {
-		err := clients[i].Close()
-		if err != nil {
-			log.Fatalf("Close Error: %s", err)
+		if clients[i] != nil {
+			err := clients[i].Close()
+			if err != nil {
+				log.Fatalf("Close Error: %s", err)
+			}
 		}
 	}
 

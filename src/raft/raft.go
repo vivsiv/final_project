@@ -13,9 +13,9 @@ import (
 )
 
 // Various constants 
-const ELECTION_TIMEOUT_MIN = 150
-const ELECTION_TIMEOUT_MAX = 300
-const HEARTBEAT_TIMEOUT = 40
+const ELECTION_TIMEOUT_MIN = 300
+const ELECTION_TIMEOUT_MAX = 500
+const HEARTBEAT_TIMEOUT = 30
 const APPLY_STATE_TIMEOUT = 50
 
 type State int
@@ -260,7 +260,9 @@ func (rf *Raft) broadcastRequestVote(){
 
 			reply := &RequestVoteReply{}
 
-			go rf.sendRequestVote(peerNum, *args, reply)
+			if rf.peers[peerNum] != nil {
+				go rf.sendRequestVote(peerNum, *args, reply)
+			}
 		}
 
 		rf.releaseMutex("broadcastRequestVote()")
@@ -440,28 +442,10 @@ func (rf *Raft) broadcastAppendEntries(){
 							peerNum, args.PrevLogIndex + 1, args.Entries))
 				}
 
-				go rf.sendAppendEntries(peerNum, *args, reply)
+				if rf.peers[peerNum] != nil {
+					go rf.sendAppendEntries(peerNum, *args, reply)
+				}
 			}
-
-			// args := &AppendEntriesArgs{}
-			// args.Term = rf.CurrentTerm
-			// args.LeaderId = rf.me
-
-			// // Set the info of the previous log entry (immediately preceeding nextLogIdx)
-			// args.PrevLogIndex = nextLogIdx - 1
-			// args.PrevLogTerm = rf.getLogTerm(args.PrevLogIndex)
-			// args.Entries = rf.Logs[rf.getLogEntryNum(nextLogIdx):]
-			// args.LeaderCommit = rf.CommitIndex
-
-			// reply := &AppendEntriesReply{}
-
-			// if len(args.Entries) > 0 {
-			// 	msgs = append(msgs, 
-			// 		fmt.Sprintf("<Peer:%d, Entries[%d-%d]:%v>", 
-			// 			peerNum, args.PrevLogIndex + 1, args.PrevLogIndex + len(args.Entries), args.Entries))
-			// }
-
-			// go rf.sendAppendEntries(peerNum, *args, reply)
 
 			rf.releaseMutex("broadcastAppendEntries()")
 		}		

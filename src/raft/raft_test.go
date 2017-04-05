@@ -14,13 +14,13 @@ const RaftElectionTimeout = 1000 * time.Millisecond
 
 func TestInitialElection(t *testing.T) {
 	num_servers := 3
-	cfg := make_config(num_servers)
+	cfg := make_config(t, num_servers)
 	defer cfg.cleanup()
 
 	fmt.Printf("\n")
 	log.Printf("InitialElection: Start...\n")
 
-	// // is a leader elected?
+	// is a leader elected?
 	cfg.checkOneLeader()
 
 	log.Printf("InitialElection: Checked One Leader ...\n")
@@ -39,51 +39,9 @@ func TestInitialElection(t *testing.T) {
 	fmt.Printf("\n")
 }
 
-func TestReElection(t *testing.T) {
-	num_servers := 3
-	cfg := make_config(num_servers)
-	defer cfg.cleanup()
-
-	fmt.Printf("\n")
-	log.Printf("ReElection: Start...\n")
-
-	leader1 := cfg.checkOneLeader()
-
-	log.Printf("ReElection: Checked One Leader...\n")
-
-	// if the leader disconnects, a new one should be elected.
-	cfg.disconnect(leader1)
-	cfg.checkOneLeader()
-
-	log.Printf("ReElection: Disconnected Leader and Checked One New Leader\n")
-
-	// if the old leader rejoins, that shouldn't
-	// disturb the old leader.
-	cfg.connect(leader1)
-	leader2 := cfg.checkOneLeader()
-
-	// if there's no quorum, no leader should
-	// be elected.
-	cfg.disconnect(leader2)
-	cfg.disconnect((leader2 + 1) % num_servers)
-	time.Sleep(2 * RaftElectionTimeout)
-	cfg.checkNoLeader()
-
-	// if a quorum arises, it should elect a leader.
-	cfg.connect((leader2 + 1) % num_servers)
-	cfg.checkOneLeader()
-
-	// re-join of last node shouldn't prevent leader from existing.
-	cfg.connect(leader2)
-	cfg.checkOneLeader()
-
-	log.Printf("ReElection: Passed\n")
-	fmt.Printf("\n")
-}
-
 func TestBasicAgree(t *testing.T) {
 	num_servers := 3
-	cfg := make_config(num_servers)
+	cfg := make_config(t, num_servers)
 	defer cfg.cleanup()
 
 	fmt.Printf("\n")
@@ -105,3 +63,53 @@ func TestBasicAgree(t *testing.T) {
 	fmt.Printf("BasicAgree: Passed...\n")
 	fmt.Printf("\n")
 }
+
+func TestReElection(t *testing.T) {
+	num_servers := 3
+	cfg := make_config(t, num_servers)
+	defer cfg.cleanup()
+
+	fmt.Printf("\n")
+	log.Printf("ReElection: Start...\n")
+
+	log.Printf("ReElection: Checking One Leader...\n")
+	leader1 := cfg.checkOneLeader()
+	log.Printf("ReElection: Checked One Leader: %d\n", leader1)
+
+
+	log.Printf("ReElection: Disconnecting Leader:%d and Checking One Leader\n", leader1)
+	cfg.disconnect(leader1)
+	newLeader := cfg.checkOneLeader()
+	log.Printf("ReElection: Disconnected Leader:%d and Checked One Leader:%d\n", leader1, newLeader)
+
+
+	log.Printf("ReElection: Reconnecting Leader:%d and Checking One Leader\n", leader1)
+	cfg.connect(leader1)
+	leader2 := cfg.checkOneLeader()
+	log.Printf("ReElection: Reconnected Leader:%d and Checked One Leader:%d\n", leader1, leader2)
+
+
+	log.Printf("ReElection: Disconnecting 2 servers:%d,%d and Checking No Leader\n", leader2, ((leader2 + 1) % num_servers))
+	cfg.disconnect(leader2)
+	cfg.disconnect((leader2 + 1) % num_servers)
+	time.Sleep(2 * RaftElectionTimeout)
+	cfg.checkNoLeader()
+	log.Printf("ReElection: Disconnected 2 servers:%d,%d and Checked No Leader\n", leader2, ((leader2 + 1) % num_servers))
+
+	
+	log.Printf("ReElection: Reconnecting 1 server:%d and Checking One Leader\n", ((leader2 + 1) % num_servers))
+	cfg.connect((leader2 + 1) % num_servers)
+	cfg.checkOneLeader()
+	log.Printf("ReElection: Reconnected 1 server:%d and Checked One Leader\n", ((leader2 + 1) % num_servers))
+
+	
+	log.Printf("ReElection: Reconnecting 1 more server:%d and Checking One Leader\n", leader2)
+	cfg.connect(leader2)
+	cfg.checkOneLeader()
+	log.Printf("ReElection: Reconnected 1 more server:%d and Checked One Leader\n", leader2)
+
+	
+	log.Printf("ReElection: Passed\n")
+	fmt.Printf("\n")
+}
+
